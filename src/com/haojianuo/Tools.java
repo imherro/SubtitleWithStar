@@ -94,6 +94,7 @@ public class Tools {
                     t = t.replace("."," ");
                     t = t.replace("?"," ");
                     t = t.replace("\""," ");
+                    t = t.replace("!"," ");
                     t = t.replace(" ","");
                     if (hsKnown.contains(t)){
                         //line = line.replace(al[i],getStars(al[i]));
