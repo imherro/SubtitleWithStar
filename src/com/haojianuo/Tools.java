@@ -1,5 +1,9 @@
 package com.haojianuo;
 
+import com.lsj.trans.LANG;
+import com.lsj.trans.factory.TFactory;
+import com.lsj.trans.factory.TranslatorFactory;
+
 import java.io.*;
 import java.util.HashSet;
 import java.util.regex.Pattern;
@@ -10,13 +14,16 @@ import java.util.regex.Pattern;
 public class Tools {
     //my known words
     public static HashSet hsKnown = new HashSet();
+
+    public static TFactory factory;
     /**
      * import my words from txt which I known
      */
     public static void importKnownWords(){
 
         //String kw = Tools.readTxt(System.getProperty("user.dir")+"/out/com/haojianuo/knownwords.txt");
-        String kw = Tools.readTxt(System.getProperty("user.dir")+"/db/knownwords.txt");
+        //String kw = Tools.readTxt(System.getProperty("user.dir")+"/db/knownwords.txt");
+        String kw = Tools.readTxt(System.getProperty("user.dir")+"/db/knownwords-kunpeng.txt");
         Tools.oo(kw);
         for (int i=0;i<10;i++){
             kw.replace(""+i,"");
@@ -36,8 +43,8 @@ public class Tools {
 
     public static void addTransIntoWords(){
         try {
-           File filename = new File(System.getProperty("user.dir")+"/db/EnglishWordsTransform.txt"); // 要读取以上路径的input。txt文件
-           InputStreamReader reader = new InputStreamReader(
+            File filename = new File(System.getProperty("user.dir")+"/db/EnglishWordsTransform.txt"); // 要读取以上路径的input。txt文件
+            InputStreamReader reader = new InputStreamReader(
                     new FileInputStream(filename)); // 建立一个输入流对象reader
             BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
             String line = "";
@@ -89,19 +96,28 @@ public class Tools {
                 String newline = "";
                 for(int i=0;i<al.length;i++){
                     String t = al[i].toLowerCase();
+
+                    if(t.indexOf("'")>0){
+                        t = t.substring(0,t.indexOf("'"));
+                    }
+                    if(t.indexOf(".")>0){
+                        t = t.substring(0,t.indexOf("."));
+                    }
+                    if(t.indexOf(",")>0){
+                        t = t.substring(0,t.indexOf(","));
+                    }
                     t = t.replace("*"," ");
                     t = t.replace(","," ");
                     t = t.replace("."," ");
                     t = t.replace("?"," ");
                     t = t.replace("\""," ");
                     t = t.replace("!"," ");
-                    t = t.replace(" ","");
-                    if (hsKnown.contains(t)){
+                    t = t.replaceAll(" ","");
+                    if (hsKnown.contains(t.toLowerCase())){
                         //line = line.replace(al[i],getStars(al[i]));
                         newline+= getStars(al[i])+" ";
                     }else{
-
-                        newline+= (al[i])+" ";
+                        newline+= (al[i]+translate(al[i])+" ");
                     }
                 }
                 out.write(newline+"\r\n");
@@ -118,7 +134,18 @@ public class Tools {
         String r ="";
         if (s!=null && s.length()>0){
             for(int i=0;i<s.length();i++){
-                r+="#";
+                if(i<s.length()-1 && s.substring(i,i+1).equals("'")){
+                    r+="'";
+                }else if(i<s.length()-1 && s.substring(i,i+1).equals("*")){
+                    r+="*";
+                }else if(i<s.length()-1 && s.substring(i,i+1).equals("?")){
+                    r+="?";
+                }else if(i<s.length()-1 && s.substring(i,i+1).equals(".")){
+                    r+="";
+                }
+                else{
+                    r+=".";
+                }
             }
         }
         return r;
@@ -166,6 +193,53 @@ public class Tools {
     public static boolean isInteger(String str) {
         Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
         return pattern.matcher(str).matches();
+    }
+
+    public static String translate(String origin){
+
+        String t = origin.replace("*"," ");
+        t = t.replace(","," ");
+        t = t.replace("."," ");
+        t = t.replace("?"," ");
+        t = t.replace("\""," ");
+        t = t.replace("!"," ");
+        t = t.replaceAll(" ","");
+        try {
+            if(factory==null)
+                factory = new TranslatorFactory();
+            if(Tools.isInteger(t))
+                 return "";
+            if(t.matches("[a-z]+"))
+                return factory.get("omi").trans(LANG.EN, LANG.ZH, t);
+            else
+                return "";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    public static void test() throws Exception {
+
+        if(factory==null)
+            factory = new TranslatorFactory();
+        String origin = "Xamarin.Forms has several layouts and features for organizing content on screen.\n Each layout control is described below, as well as details on how to handle screen orientation changes:";
+        System.out.println("金山 : " + factory.get("jinshan").trans(LANG.EN, LANG.ZH, origin));
+        System.out.println("有道 : " + factory.get("youdao").trans(LANG.EN, LANG.ZH, origin));
+        System.out.println("百度 : " + factory.get("baidu").trans(LANG.EN, LANG.ZH, origin));
+        System.out.println("谷歌 : " + factory.get("google").trans(LANG.EN, LANG.ZH, origin));
+        System.out.println("腾讯 : " + factory.get("tencent").trans(LANG.EN, LANG.ZH, origin));
+        System.out.println("欧米 : " + factory.get("omi").trans(LANG.EN, LANG.ZH, origin));
+        System.out.println("\n");
+
+
+        origin = "这个巡展，大家想去的先注册，临近当地巡展时候，会有注册确认邮件发给大家，届时可以看到详细的活动地址。\n等你工作了你就知道你当时的观念是多么的幼稚";
+        System.out.println("金山 : " + factory.get("jinshan").trans(LANG.ZH, LANG.EN, origin));
+        System.out.println("有道 : " + factory.get("youdao").trans(LANG.ZH, LANG.EN, origin));
+        System.out.println("百度 : " + factory.get("baidu").trans(LANG.ZH, LANG.EN, origin));
+        System.out.println("谷歌 : " + factory.get("google").trans(LANG.ZH, LANG.EN, origin));
+        System.out.println("腾讯 : " + factory.get("tencent").trans(LANG.ZH, LANG.EN, origin));
+        System.out.println("欧米 : " + factory.get("omi").trans(LANG.ZH, LANG.EN, origin));
     }
 }
 

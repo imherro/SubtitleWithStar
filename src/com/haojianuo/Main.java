@@ -1,7 +1,7 @@
 package com.haojianuo;
 
+
 import java.io.File;
-import java.util.HashSet;
 
 public class Main {
 
@@ -9,6 +9,11 @@ public class Main {
 
     public static void main(String[] args) {
 	// write your code here
+        try {
+            //Tools.test();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         init();
         Tools.starOriginSrt("Counterpart.S01E04.720p.WEB.H264-DEFLATE.英文.srt");
     }
