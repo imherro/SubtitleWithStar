@@ -75,7 +75,30 @@ public class Tools {
             e.printStackTrace();
         }
     }
-
+    public static void starOriginSrtBAT(String pathname){
+        File file = new File(pathname);
+        if (file.exists()) {
+            File[] files = file.listFiles();
+            if (files.length == 0) {
+                System.out.println("文件夹是空的!");
+                return;
+            } else {
+                for (File file2 : files) {
+                    if (file2.isDirectory()) {
+                        System.out.println("文件夹:" + file2.getAbsolutePath());
+                    } else {
+                        if(file2.getName().indexOf("srt.srt")>0) {continue;}
+                        if(file2.getName().indexOf(".srt")>0) {
+                            System.out.println("处理字幕文件:" + file2.getAbsolutePath());
+                            starOriginSrt(file2.getAbsolutePath());
+                        }
+                    }
+                }
+            }
+        } else {
+            System.out.println(pathname+"文件不存在!");
+        }
+    }
     /**
      * import origin subtitle and write a new subtitl with stars
      * @param pathname
@@ -84,8 +107,8 @@ public class Tools {
 
         try {
 
-            File filename = new File(System.getProperty("user.dir")+"/db/"+pathname);
-            File writename = new File(System.getProperty("user.dir")+"/db/new_"+pathname);
+            File filename = new File(pathname);
+            File writename = new File(pathname+".srt");
 
             writename.createNewFile();
             BufferedWriter out = new BufferedWriter(new FileWriter(writename));
