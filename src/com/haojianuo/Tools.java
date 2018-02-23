@@ -1,8 +1,6 @@
 package com.haojianuo;
 
-import com.lsj.trans.LANG;
-import com.lsj.trans.factory.TFactory;
-import com.lsj.trans.factory.TranslatorFactory;
+
 
 import java.io.*;
 import java.util.HashMap;
@@ -18,7 +16,7 @@ public class Tools {
     public static HashMap<String,String> hmDictionary = new HashMap();
     public static HashMap<String,String> hmTransform= new HashMap();
 
-    public static TFactory factory;
+
     /**
      * import my words from txt which I known
      */
@@ -26,6 +24,7 @@ public class Tools {
 
         String kw = Tools.readTxt(System.getProperty("user.dir")+"/db/knownwords-kunpeng.txt");
         //Tools.oo(kw);
+
         for (int i=0;i<10;i++){
             kw.replace(""+i,"");
         }
@@ -100,6 +99,9 @@ public class Tools {
                 oo("------"+line);
                 if(line == null ){continue;}
                 line = line.replaceAll("\\*+"," ");
+                //line = line.replace(","," ");
+                line = line.replace("."," ");
+                line = line.replaceAll(" +"," ");
                 String[]  al = line.split(" ");
                 String newline = "";
                 for(int i=0;i<al.length;i++){
@@ -120,12 +122,18 @@ public class Tools {
                     t = t.replace("?"," ");
                     t = t.replace("\""," ");
                     t = t.replace("!"," ");
-                    t = t.replaceAll(" ","");
+                    t = t.replaceAll(" +","");
+                    if(!al[i].matches("[a-zA-Z']+")){
+                        newline+= (al[i])+" ";
+                        continue;
+                    }
                     if (hsKnown.contains(t.toLowerCase())){
-                        //line = line.replace(al[i],getStars(al[i]));
                         newline+= getStars(al[i])+" ";
                     }else{
-                        newline+= (al[i]+" ["+translate(al[i])+"] ");
+                        if (t.length()>2 && al[i].matches("[a-zA-Z']+"))
+                            newline+= (al[i]+translate(al[i])+" ");
+                        else
+                            newline+= (al[i])+" ";
                     }
                 }
                 out.write(newline+"\r\n");
@@ -140,6 +148,8 @@ public class Tools {
     }
     public static  String getStars(String s){
         String r ="";
+        boolean lucky=false;
+        //lucky = (new java.util.Random().nextInt(3)==1);
         if (s!=null && s.length()>0){
             for(int i=0;i<s.length();i++){
                 if(i<s.length()-1 && s.substring(i,i+1).equals("'")){
@@ -149,10 +159,13 @@ public class Tools {
                 }else if(i<s.length()-1 && s.substring(i,i+1).equals("?")){
                     r+="?";
                 }else if(i<s.length()-1 && s.substring(i,i+1).equals(".")){
-                    r+="";
+                    r+=".";
                 }
                 else{
-                    r+=".";
+                    if (s.length()>3 && lucky)
+                        r+=s.substring(i,i+1);
+                    else
+                        r+=".";
                 }
             }
         }
@@ -258,7 +271,7 @@ public class Tools {
         }
     }
     public static String translate(String origin){
-
+        if(origin.length()<4) {return "";}
         String t = origin.replace("*"," ");
         t = t.replace(","," ");
         t = t.replace("."," ");
@@ -266,22 +279,19 @@ public class Tools {
         t = t.replace("\""," ");
         t = t.replace("!"," ");
         t = t.replaceAll(" ","");
+        t = t.toLowerCase();
         try {
-            if(factory==null)
-                factory = new TranslatorFactory();
             if(Tools.isInteger(t))
-                 return "";
-            if(t.matches("[a-z]+")) {
+                 return origin;
+            if(t.matches("[a-zA-Z']+")) {
                 if(hmTransform.containsKey(t)) {
                     t = hmTransform.get(t);
                 }
                 if (hmDictionary.containsKey(t)) {
-                    return hmDictionary.get(t);
+                    return "["+hmDictionary.get(t)+"]";
                     //return "####";
                 }else {
-                    String r = " ???? ";
-                    //r = factory.get("omi").trans(LANG.EN, LANG.ZH, t);
-                    if(r.length()>5) r=r.substring(0,5);
+                    String r = "[??]";
                     return r;
                     //return "****";
                 }
@@ -294,28 +304,7 @@ public class Tools {
         }
     }
 
-    public static void test() throws Exception {
 
-        if(factory==null)
-            factory = new TranslatorFactory();
-        String origin = "Xamarin.Forms has several layouts and features for organizing content on screen.\n Each layout control is described below, as well as details on how to handle screen orientation changes:";
-        System.out.println("金山 : " + factory.get("jinshan").trans(LANG.EN, LANG.ZH, origin));
-        System.out.println("有道 : " + factory.get("youdao").trans(LANG.EN, LANG.ZH, origin));
-        System.out.println("百度 : " + factory.get("baidu").trans(LANG.EN, LANG.ZH, origin));
-        System.out.println("谷歌 : " + factory.get("google").trans(LANG.EN, LANG.ZH, origin));
-        System.out.println("腾讯 : " + factory.get("tencent").trans(LANG.EN, LANG.ZH, origin));
-        System.out.println("欧米 : " + factory.get("omi").trans(LANG.EN, LANG.ZH, origin));
-        System.out.println("\n");
-
-
-        origin = "这个巡展，大家想去的先注册，临近当地巡展时候，会有注册确认邮件发给大家，届时可以看到详细的活动地址。\n等你工作了你就知道你当时的观念是多么的幼稚";
-        System.out.println("金山 : " + factory.get("jinshan").trans(LANG.ZH, LANG.EN, origin));
-        System.out.println("有道 : " + factory.get("youdao").trans(LANG.ZH, LANG.EN, origin));
-        System.out.println("百度 : " + factory.get("baidu").trans(LANG.ZH, LANG.EN, origin));
-        System.out.println("谷歌 : " + factory.get("google").trans(LANG.ZH, LANG.EN, origin));
-        System.out.println("腾讯 : " + factory.get("tencent").trans(LANG.ZH, LANG.EN, origin));
-        System.out.println("欧米 : " + factory.get("omi").trans(LANG.ZH, LANG.EN, origin));
-    }
 }
 
 
