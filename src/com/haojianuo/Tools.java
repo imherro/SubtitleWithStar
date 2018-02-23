@@ -5,6 +5,7 @@ import com.lsj.trans.factory.TFactory;
 import com.lsj.trans.factory.TranslatorFactory;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.regex.Pattern;
 
@@ -14,6 +15,8 @@ import java.util.regex.Pattern;
 public class Tools {
     //my known words
     public static HashSet hsKnown = new HashSet();
+    public static HashMap<String,String> hmDictionary = new HashMap();
+    public static HashMap<String,String> hmTransform= new HashMap();
 
     public static TFactory factory;
     /**
@@ -21,47 +24,54 @@ public class Tools {
      */
     public static void importKnownWords(){
 
-        //String kw = Tools.readTxt(System.getProperty("user.dir")+"/out/com/haojianuo/knownwords.txt");
-        //String kw = Tools.readTxt(System.getProperty("user.dir")+"/db/knownwords.txt");
         String kw = Tools.readTxt(System.getProperty("user.dir")+"/db/knownwords-kunpeng.txt");
-        Tools.oo(kw);
+        //Tools.oo(kw);
         for (int i=0;i<10;i++){
             kw.replace(""+i,"");
         }
+        kw.replace(":","");
         kw.replace("#","");
         String[] sa = kw.split(" ");
         Tools.oo(sa.length);
         for (int i=0;i<sa.length;i++){
             if(sa[i]!=null && sa[i].length()>0) {
+                if(sa[i].contains("????")){break;}//发现四个问号，就略过后面所有的单词。前面做了问号标记的同样会是生词
                 if(Tools.isInteger(sa[i])){continue;}
                 hsKnown.add(sa[i].toLowerCase());
             }
         }
 
-        Tools.oo(hsKnown.size());
+        Tools.oo("mywords:"+hsKnown.size());
     }
+
 
     public static void addTransIntoWords(){
         try {
-            File filename = new File(System.getProperty("user.dir")+"/db/EnglishWordsTransform.txt"); // 要读取以上路径的input。txt文件
+            File filename = new File(System.getProperty("user.dir")+"/db/EnglishWordsTransform.txt");
             InputStreamReader reader = new InputStreamReader(
-                    new FileInputStream(filename)); // 建立一个输入流对象reader
-            BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
+                    new FileInputStream(filename));
+            BufferedReader br = new BufferedReader(reader);
             String line = "";
-            line = br.readLine();
-
             while (line != null) {
-                line = br.readLine(); // 一次读入一行数据
+                line = br.readLine();
                 if(line==null || line.length()==0){continue;}
                 line =  line.replace("\t"," ");
                 String[] al = line.split(" ");
                 if(al.length>1 && hsKnown.contains(al[0])){
+                    String originalWord = "";
                     for (int i = 0; i < al.length; i++) {
                         hsKnown.add(al[i]);
+                        if(i==0) {
+                            originalWord=al[0];
+                        } else{
+                            hmTransform.put(al[i],originalWord);
+                        }
+
                     }
                 }
             }
-            oo(hsKnown.size());
+            oo("mywords-transformed:"+hsKnown.size());
+            oo("hsTransform:"+hmTransform.size());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -73,25 +83,23 @@ public class Tools {
      */
     public static void starOriginSrt(String pathname){
 
-        try { // 防止文件建立或读取失败，用catch捕捉错误并打印，也可以throw
+        try {
 
-                /* 读入TXT文件 */
-            //String pathname = "D:\\twitter\\13_9_6\\dataset\\en\\input.txt"; // 绝对路径或相对路径都可以，这里是绝对路径，写入文件时演示相对路径
-            File filename = new File(System.getProperty("user.dir")+"/db/"+pathname); // 要读取以上路径的input。txt文件
-            File writename = new File(System.getProperty("user.dir")+"/db/new_"+pathname); // 相对路径，如果没有则要建立一个新的output。txt文件
+            File filename = new File(System.getProperty("user.dir")+"/db/"+pathname);
+            File writename = new File(System.getProperty("user.dir")+"/db/new_"+pathname);
 
-            writename.createNewFile(); // 创建新文件
+            writename.createNewFile();
             BufferedWriter out = new BufferedWriter(new FileWriter(writename));
 
             InputStreamReader reader = new InputStreamReader(
-                    new FileInputStream(filename)); // 建立一个输入流对象reader
-            BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
+                    new FileInputStream(filename));
+            BufferedReader br = new BufferedReader(reader);
             String line = "";
             while (line != null) {
-                line = br.readLine(); // 一次读入一行数据
+                line = br.readLine();
                 oo("------"+line);
-                /* 写入Txt文件 */
                 if(line == null ){continue;}
+                line = line.replaceAll("\\*+"," ");
                 String[]  al = line.split(" ");
                 String newline = "";
                 for(int i=0;i<al.length;i++){
@@ -117,14 +125,14 @@ public class Tools {
                         //line = line.replace(al[i],getStars(al[i]));
                         newline+= getStars(al[i])+" ";
                     }else{
-                        newline+= (al[i]+translate(al[i])+" ");
+                        newline+= (al[i]+" ["+translate(al[i])+"] ");
                     }
                 }
                 out.write(newline+"\r\n");
                 oo("======"+newline);
             }
-            out.flush(); // 把缓存区内容压入文件
-            out.close(); // 最后记得关闭文件
+            out.flush();
+            out.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -154,18 +162,14 @@ public class Tools {
 
     public static String readTxt(String pathname){
         String r= "";
-        try { // 防止文件建立或读取失败，用catch捕捉错误并打印，也可以throw
-
-                /* 读入TXT文件 */
-            //String pathname = "D:\\twitter\\13_9_6\\dataset\\en\\input.txt"; // 绝对路径或相对路径都可以，这里是绝对路径，写入文件时演示相对路径
-            File filename = new File(pathname); // 要读取以上路径的input。txt文件
+        try {
+            File filename = new File(pathname);
             InputStreamReader reader = new InputStreamReader(
-                    new FileInputStream(filename)); // 建立一个输入流对象reader
-            BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
+                    new FileInputStream(filename));
+            BufferedReader br = new BufferedReader(reader);
             String line = "";
-            line = br.readLine();
             while (line != null) {
-                line = br.readLine(); // 一次读入一行数据
+                line = br.readLine();
                 r+=line+" \r\n";
             }
             return r;
@@ -177,14 +181,13 @@ public class Tools {
     }
 
     public static void writeTxt(String pathname){
-        try { // 防止文件建立或读取失败，用catch捕捉错误并打印，也可以throw
-                /* 写入Txt文件 */
-            File writename = new File(pathname); // 相对路径，如果没有则要建立一个新的output。txt文件
-            writename.createNewFile(); // 创建新文件
+        try {
+            File writename = new File(pathname);
+            writename.createNewFile();
             BufferedWriter out = new BufferedWriter(new FileWriter(writename));
-            out.write("我会写入文件啦\r\n"); // \r\n即为换行
-            out.flush(); // 把缓存区内容压入文件
-            out.close(); // 最后记得关闭文件
+            //out.write("我会写入文件啦\r\n"); // \r\n即为换行
+            out.flush();
+            out.close();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -194,7 +197,66 @@ public class Tools {
         Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
         return pattern.matcher(str).matches();
     }
-
+    /**
+     * import dictionary from txt
+     */
+    public static void importDictionary(){
+        try {
+            File filename = new File(System.getProperty("user.dir")+"/db/GRE-Words.txt"); // 要读取以上路径的input。txt文件
+            InputStreamReader reader = new InputStreamReader(
+                    new FileInputStream(filename));
+            BufferedReader br = new BufferedReader(reader);
+            String line = "";
+            int loop=0;
+            String key="",value="";
+            while (line != null) {
+                line = br.readLine();
+                if(line==null || line.length()==0){continue;}
+                if(line.indexOf("Q:")==0){
+                    loop=0;
+                }
+                if(loop==0){
+                    key=line.replaceFirst("Q:","").replace(" ","");
+                }
+                if(loop==2){
+                    value=line.replace("A:","").replace(" ","");
+                }
+                if(loop<3 && key.length()>0 && value.length()>0){
+                    hmDictionary.put(key,value);
+                    key="";value="";
+                }
+                loop++;
+            }
+            oo("hmDictionary:"+hmDictionary.size());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            File filename = new File(System.getProperty("user.dir")+"/db/Niujin-Words2.txt"); // 要读取以上路径的input。txt文件
+            InputStreamReader reader = new InputStreamReader(
+                    new FileInputStream(filename));
+            BufferedReader br = new BufferedReader(reader);
+            String line = "";
+            String key="",value="";
+            while (line != null) {
+                line = br.readLine();
+                if(line==null || line.length()==0){continue;}
+                line = line.replaceAll(" +"," ");
+                String[] sa = line.split(" ");
+                if(sa!=null && sa.length>1){
+                    key=sa[0];
+                    value=sa[1];
+                }
+                if(key.length()>0 && value.length()>0){
+                    hmDictionary.put(key,value);
+                    key="";value="";
+                }
+            }
+            oo("hmDictionary-niujin-after:"+hmDictionary.size());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     public static String translate(String origin){
 
         String t = origin.replace("*"," ");
@@ -209,8 +271,21 @@ public class Tools {
                 factory = new TranslatorFactory();
             if(Tools.isInteger(t))
                  return "";
-            if(t.matches("[a-z]+"))
-                return factory.get("omi").trans(LANG.EN, LANG.ZH, t);
+            if(t.matches("[a-z]+")) {
+                if(hmTransform.containsKey(t)) {
+                    t = hmTransform.get(t);
+                }
+                if (hmDictionary.containsKey(t)) {
+                    return hmDictionary.get(t);
+                    //return "####";
+                }else {
+                    String r = " ???? ";
+                    //r = factory.get("omi").trans(LANG.EN, LANG.ZH, t);
+                    if(r.length()>5) r=r.substring(0,5);
+                    return r;
+                    //return "****";
+                }
+            }
             else
                 return "";
         } catch (Exception e) {

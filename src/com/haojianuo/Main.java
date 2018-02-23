@@ -24,7 +24,7 @@ public class Main {
             System.out.println(directory.getCanonicalPath());//获取标准的路径
             System.out.println(directory.getAbsolutePath());//获取绝对路径
         }catch(Exception e){}
-
+        Tools.importDictionary();
         Tools.importKnownWords();
         Tools.addTransIntoWords();
 
