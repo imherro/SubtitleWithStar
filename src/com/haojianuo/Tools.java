@@ -23,7 +23,7 @@ public class Tools {
 
         //String kw = Tools.readTxt(System.getProperty("user.dir")+"/out/com/haojianuo/knownwords.txt");
         //String kw = Tools.readTxt(System.getProperty("user.dir")+"/db/knownwords.txt");
-        String kw = Tools.readTxt(System.getProperty("user.dir")+"/db/knownwords-kunpeng.txt");
+        String kw = Tools.readTxt(System.getProperty("user.dir")+"/db/knownwords.txt");
         Tools.oo(kw);
         for (int i=0;i<10;i++){
             kw.replace(""+i,"");
@@ -114,7 +114,6 @@ public class Tools {
                     t = t.replace("!"," ");
                     t = t.replaceAll(" ","");
                     if (hsKnown.contains(t.toLowerCase())){
-                        //line = line.replace(al[i],getStars(al[i]));
                         newline+= getStars(al[i])+" ";
                     }else{
                         newline+= (al[i]+translate(al[i])+" ");
@@ -132,6 +131,8 @@ public class Tools {
     }
     public static  String getStars(String s){
         String r ="";
+        boolean lucky=false;
+        lucky = (new java.util.Random().nextInt(3)==1);
         if (s!=null && s.length()>0){
             for(int i=0;i<s.length();i++){
                 if(i<s.length()-1 && s.substring(i,i+1).equals("'")){
@@ -144,7 +145,10 @@ public class Tools {
                     r+="";
                 }
                 else{
-                    r+=".";
+                    if (s.length()>3 && lucky)
+                        r+=s.substring(i,i+1);
+                    else
+                        r+=".";
                 }
             }
         }
@@ -163,7 +167,6 @@ public class Tools {
                     new FileInputStream(filename)); // 建立一个输入流对象reader
             BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
             String line = "";
-            line = br.readLine();
             while (line != null) {
                 line = br.readLine(); // 一次读入一行数据
                 r+=line+" \r\n";
@@ -196,7 +199,7 @@ public class Tools {
     }
 
     public static String translate(String origin){
-
+        if(origin.length()<4) {return "";}
         String t = origin.replace("*"," ");
         t = t.replace(","," ");
         t = t.replace("."," ");

@@ -15,7 +15,7 @@ public class Main {
             e.printStackTrace();
         }
         init();
-        Tools.starOriginSrt("Counterpart.S01E04.720p.WEB.H264-DEFLATE.英文.srt");
+        Tools.starOriginSrt("Modern.Family.S03E01.720p.5.1Ch.BluRay.ReEnc-DeeJayAhmed.srt");
     }
     public static void init(){
         System.out.println(System.getProperty("user.dir"));//user.dir指定了当前的路径
